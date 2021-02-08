@@ -2,10 +2,9 @@ import re
 import json
 import base64
 import requests
-from secrets import token_hex
-
 from bs4 import BeautifulSoup
 
+from secrets import token_hex
 
 def generate_device_info():
     # I'm still trying to figure out how to generate the device id. So far, decompilation is proving difficult,
@@ -17,15 +16,16 @@ def generate_device_info():
     }
 
 def decode_base64(data: str):
-    data = re.sub(rb'[^a-zA-Z0-9+/]', b'', data.encode())[:162]
-    return base64.b64decode(data + b'=' * (-len(data) % 4)).decode("cp437")[1:]
+    data = re.sub(rb'[^a-zA-Z0-9+/]', b'+', data.encode())
+    data = base64.b64decode(data + b'=' * (-len(data) % 4)).decode("cp437")
+    return json.loads(data[1:data.find("}")+1])
 
 def sid_to_uid(SID: str):
-    try: return json.loads(decode_base64(SID))["2"]
+    try: return decode_base64(SID)["2"]
     except json.decoder.JSONDecodeError: return sid_to_uid_2(SID)
 
 def sid_to_ip_address(SID: str):
-    try: return json.loads(decode_base64(SID))["4"]
+    try: return decode_base64(SID)["4"]
     except json.decoder.JSONDecodeError: return sid_to_ip_address_2(SID)
 
 def sid_to_uid_2(SID: str):
